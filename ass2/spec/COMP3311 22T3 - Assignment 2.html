@@ -1,0 +1,428 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>COMP3311 22T3 - Assignment 2</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+<link rel='stylesheet' type='text/css' href='https://www.cse.unsw.edu.au/~cs3311/22T3//course.css'>
+</head>
+<body>
+<div class="container"></head>
+<body>
+<div align='center'>
+<table width='100%' border='0'>
+<tr valign='top'>
+<td align='left' width='25%'>
+  <span class='tiny'><a href="https://www.cse.unsw.edu.au/~cs3311/22T3/">COMP3311 22T3</a></span>
+</td>
+<td align='center' width='50%'>
+  <span class='heading'>Assignment 2</span><br>
+  <span class='subheading'>Python, PostgreSQL, IMDB</span>
+</td>
+<td align='right' width='25%'>
+  <span class='tiny'><a href="https://www.cse.unsw.edu.au/~cs3311/22T3/">Database Systems</a></span>
+</td>
+</table>
+</div><div style="text-align:center;font-size:80%;color:#555555;margin-top:5px;">
+Last updated: <b>Wednesday 1st March 4:47am</b> <br>
+Most recent changes are shown in <span class="red">red</span> ...
+older changes are shown in <span class="brown">brown</span>. <br>
+</div><p style='text-align:center'><b>[Specification]</b>&nbsp;&nbsp;<a href='database.php'>[Database]</a>&nbsp;&nbsp;<a href='examples.php'>[Examples]</a>&nbsp;&nbsp;<a href='testing.php'>[Testing]</a>&nbsp;&nbsp;<a href='submit.php'>[Submitting]</a></p>
+
+
+<!--
+<h3>99% DRAFT</h3>
+<p>
+Almost done. Definitely enough for you to get started.
+Testing and submission details to follow.
+And I want <em>you</em> to suggest more test cases to add to the
+Examples page.
+</p>
+-->
+
+<h3>Aims</h3>
+<p>
+This assignment aims to give you practice in
+</p>
+<ul>
+<li> implementing Python scripts to extract and display data from a database
+<li> [optionally] implementing SQL views and PLpgSQL functions to support the scripts
+<li> [optionally] implementing a collection of Python functions to support the scripts
+</ul>
+<p>
+The goal is to build some useful data access operations on the Movie database. 
+</p>
+
+<h3>Summary</h3>
+<table border="0" cellpadding="10">
+<tr valign="top"><td><b>Marks</b>:</td>
+<td>
+This assignment contributes <b>20 marks</b> toward your total mark for this course. 
+</td>
+</tr>
+<tr valign="top"><td><b>Submission</b>:</td>
+<td>
+via Webcms3 or <tt>give</tt>, submit the files <br>
+<tt>dirby</tt>, <tt>releases</tt>, <tt>genres</tt>, <tt>roles</tt>, <tt>movie</tt>, <tt>helpers.py</tt>, <tt>helpers.sql</tt>
+</td>
+</tr>
+<tr><td><b>Deadline</b>:</td>
+<td>Friday 11 November 2022 @ 21:00</td>
+</tr>
+<tr><td><b>Late Penalty</b>:</td>
+<td>
+0.05 <em>marks</em> off the maximum achievable mark for each hour late
+(i.e., approx 1 mark per day) <br>
+for the first 5 days, then 100% penalty after that
+</td>
+</table>
+<p>
+<h4>How to do this assignment:</h4>
+</p>
+<ul>
+<li> read this specification carefully and completely
+<li> familiarise yourself with the <a href="database.php">database schema</a>
+<li> create a database <tt>ass2</tt> on the <tt>d2</tt> host
+<li> explore the database
+<li> make a private directory for this assignment (<b>not</b> under <tt>/localstorage</tt>)
+<li> put a copy of the NOT YET AVAIALBLE template files there
+<li> edit the files in this directory on a host other than <tt>d2</tt>
+<li> on <tt>d2</tt>, test that your Python scripts produce the expected output
+<li> submit the assignment via WebCMS3 or <tt>give</tt>
+	(as described on the <a href="submitting.php">What to Submit</a> page)
+</ul>
+<p>
+And, of course, if you have PostgreSQL installed on your home machine,
+you can do all of the <tt>d2</tt> work there. BUT don't forget to
+test it on <tt>d2</tt> before submitting.
+</p>
+<p>
+The "template files" aim to save you some time in writing Python code.
+E.g. they do handle the command-line arguments and let you focus on the
+database interaction.
+The <tt>helpers.*</tt> files are povided in case you want to defined
+Python functions or PLpgSQL functions that might be useful in several
+of your scripts. You are not required to use them (i.e. you can leave
+them unchanged), but they must still be submitted.
+</p>
+<p>
+The template files are available in a single ZIP file
+<a href="files/ass2.zip">ass2.zip</a>, which contains the following
+</p>
+<ul>
+<li> <tt>helpers.sql</tt> ... any views or PLpgSQL functions to assist your Python </li>
+<li> <tt>helpers.py</tt> ... any Python function to share between scripts </li>
+<li> <tt>dirby</tt> ... Python script to give a list of films for a given director </li>
+<li> <tt>releases</tt> ... Python script to show countries where a film was released </li>
+<li> <tt>genres</tt> ... Python script to show list of genres for movies released in a given year </li>
+<li> <tt>roles</tt> ... Python script to display roles played by an actor/actress</li>
+<li> <tt>movie</tt> ... Python script to display information about a movie</li>
+</ul>
+<p>
+There is even a function already in <tt>helpers.py</tt>. Freebie!
+</p>
+
+<h3>Setting Up</h3>
+
+<p>
+To install the Movie database under your PostgreSQL server on <tt>d2</tt>,
+simply run the following two commands (after ensuring that your server
+is running):
+</p>
+<pre>
+$ <b>createdb ass2</b>
+$ <b>psql ass2 -f <a href="http://www.cse.unsw.edu.au/~cs3311/22T3/assignments/ass2/files/ass2.dump">/home/cs3311/web/22T3/assignments/ass2/files/ass2.dump</a></b>
+</pre>
+<p>
+If everything proceeds correctly, the load output should look
+something like:
+</p>
+<pre>
+SET
+SET
+...
+SET
+CREATE DOMAIN
+<span class='comment'>... a few of these</span>
+CREATE TABLE
+<span class='comment'>... a few of these</span>
+COPY <i>n</i>
+<span class='comment'>... a few of these</span>
+ALTER TABLE
+<span class='comment'>... a whole bunch of these</span>
+ALTER TABLE
+</pre>
+<p>
+You should get no <tt>ERROR</tt> messages.
+The database loading should take less than 5 seconds on <tt>d2</tt>, assuming
+that <tt>d2</tt> is not under heavy load.
+(If you leave your assignment until the last minute, loading the database
+on <tt>d2</tt> may be considerably slower, thus delaying your work even more.
+The solution: at least load the database <em>Right Now</em>, even if you
+don't start using it for a while.)
+(Note that the <tt>ass2.dump</tt> file is 19MB in size; copying it under
+your home directory on the CSE machines is not a good idea.)
+</p>
+<p>
+Note that the database is called <tt>ass2</tt> (when you want to access
+it via <tt>psql</tt> or Python script).
+</p>
+<p>
+A useful thing to do initially is to get a feeling for what data is
+actually there. This may help you understand the schema better, and
+will make the descriptions of the exercises easier to understand.
+Look at the schema. Ask some queries. Do it now.
+</p>
+<p>
+Examples ...
+</p>
+<pre>
+$ <b>psql ass2</b>
+<span class="comment">... PostgreSQL welcome stuff ...</span>
+ass2=# <b>\d</b>
+<span class="comment">... look at the schema ...</span>
+ass2=# <b>select * from Movies;</b>
+<span class="comment">... look at the Movies table ...</span>
+ass2=# <b>select * from People;</b>
+<span class="comment">... look at the People table ...</span>
+ass2=# <b>select * from dbpop();</b>
+<span class="comment">... how many records in all tables ...</span>
+ass2=# <span class="comment">... etc. etc. etc.</span>
+ass2=# <b>\q</b>
+</pre>
+
+<h4>Summary on Getting Started</h4>
+
+To set up your database for this assignment, run the following commands:
+</p>
+<pre>
+$ <b>ssh <i>zID</i>@d2.cse.unsw.edu.au</tt></b>   <comment>or</comment>   <b>ssh nw-syd-vxdb2</b>
+<span class="comment">... and then on <tt>d2</tt> ...</span>
+$ <b>source /localstorage/$USER/env</b>
+$ <b>p1</b>
+<span class="comment">... you shut down the server after your last session, didn't you?</span>
+$ <b>createdb  ass2</b>
+$ <b>psql  ass2  -f  /home/cs3311/web/22T3/assignments/ass2/files/ass2.dump</b>
+$ <b>psql  ass2</b>
+<span class="comment">... run some checks to make sure the database is ok</span>
+$ <b>mkdir  <i>Assignment2Directory</i></b>
+<span class="comment">... make a working directory for Assignment 2</span>
+$ <b>cd <i>Assignment2Directory</i></b>
+$ <b>unzip /home/cs3311/web/22T3/assignments/ass2/files/ass2.zip</b>
+<span class="comment">... puts the template files in your working directory</span>
+</pre>
+<p>
+The only messages produced by these commands should be those noted above.
+If you omit any of the steps, then things will not work as planned.
+If you subsequently ask questions on the Forums, where it's
+clear that you have <em>not</em> done and checked the above steps,
+the questions will not be answered.
+</p>
+
+<h3>Exercises</h3>
+
+<h3>Q1: The <code>dirby</code> (Directed By) script<small>(3 marks)</small></h3>
+<p>
+Complete the Python3 <tt>dirby</tt> script that takes
+one command-line argument, the name of a person, and prints:
+</p>
+<ul>
+<li> a list of films that this person directed, or
+<li> a message that the person didn't direct any films, or
+<li> a message that the person does not exist in the database
+</ul>
+Note that there are some names that occur multiple times.
+<span class="red">Choose only people who have worked as directors, and then</span>
+choose the first one from that list ordered by <tt>People.id</tt>.
+<span class="red">If none of the matching people are directors,
+exit with the message "None of the people called <i>Name</i> has directed any films".</span>
+</p>
+<p>
+Examples of using the script can be found on the
+<a href="examples.php">Examples</a> page.
+</p>
+
+<h3>Q2: The <code>releases</code> script<small>(4 marks)</small></h3>
+<p>
+Complete the Python3 <tt>releases</tt> script, that takes
+two command-line arguments, the complete title of a movie
+and the year it was made, and lists all of the countries
+where it was released.
+The movie title must be an exact match to the title in the
+database (the words, the punctutation and the capitalzation).
+If the title contains multiple words, you will need to put
+them in quotes on the command line (e.g. <tt>"Bad Influence"</tt>)..
+The year must be a four-digit string (e.g 2012).
+</p>
+<p class="red">
+You can assume that the combination (title,year) is unique,
+even though there are some counter-examples in the database.
+We will not test any cases where (title,year) is not unique.
+</p>
+<p>
+First check that the year is valid (i.e. four digits). If not,
+exit with the message "Invalid year".
+</p>
+<p>
+If the movie does not exist in the database, print the message
+"No such movie", and exit the program.
+If the movie does exist, but has no releases mentioned in the
+database, print the message "No releases" and exit the program.
+Otherwise, print a list of country names, one per line,
+in alphabetical order,
+for all of the countries where the movie was released.
+</p>
+<p>
+Examples of using the script can be found on the
+<a href="examples.php">Examples</a> page.
+</p>
+
+<h3>Q3: The <code>genres</code> script<small>(3 marks)</small></h3>
+<p>
+Complete the Python3 <tt>genres</tt> script, that takes one
+command-line argument, a year, and prints a list of the top-10
+genres of movies released during that year.
+Order the list in descending order based on the number of
+movies in each genre.
+For genres that have equal numbers of movies, order by the
+genre names.
+</p>
+<p>
+First check that the year is valid (i.e. four digits). If not,
+exit with the message "Invalid year". If there are no movies
+in the given valid year, exit with the message "No movies".
+</p>
+<p>
+To extract the top 10, use the following PostgreSQL construct:
+</p>
+<pre>
+FETCH FIRST 10 ROWS WITH TIES
+</pre>
+<p>
+For details on this, see the entry for <a href="https://www.postgresql.org/docs/13/sql-select.html">SELECT</a> in the PostgreSQL documentation.
+</p>
+<p>
+Examples of using the script can be found on the
+<a href="examples.php">Examples</a> page.
+</p>
+
+<h3>Q4: The <code>roles</code> script<small>(4 marks)</small></h3>
+<p>
+Complete the Python3 <tt>roles</tt> script, that takes a
+single command-line argument, the name of an actor/actress,
+and prints a list of the roles they played.
+(<span class="red">Note: treat a principal whose <tt>job</tt>
+is <tt>self</tt> the same as an actor/actress.</span>)
+Each entry in the list gives the name of the character
+and the title and year of the movie it's in.
+<span class="red">The list should be ordered by year, then
+by movie title, then by role name.</span>
+</p>
+<p>
+If the name does not exist in the database, then print
+the message "No such person".
+If the person had no acting roles, then print the message
+"No acting roles".
+</p>
+<p>
+There are instances where several people have the same name.
+In these cases, it should print a list for each person,
+introduced by their name and a number.
+If only one person has the name, we simply print the role list
+without name or number.
+<span class="red">Order the list of people by their <tt>People.id</tt>.</span>
+</p>
+<p>
+Examples of using the script can be found on the
+<a href="examples.php">Examples</a> page.
+</p>
+
+<h3>Q5: The <code>movie</code> script<small>(6 marks)</small></h3>
+<p>
+Complete the Python3 <tt>movie</tt> script, that takes a
+single command-line argument, the (partial) name of a movie,
+and prints a list of all the principals in the movie.
+<span class="red">Order this list based on the ordering given
+in <tt>Principals.ord</tt>.</span>
+</p>
+<p>
+Actors and actresses should have the role they played in
+the movie next to their name; if there is no role information
+for that person, display "???" as the role.
+<span class="red">Treat principals with the job <tt>self</tt>
+the same as actors/actresses.</span>
+Other principals should display their name and the job
+they performed (e.g. director, cinematographer).
+</p>
+<p>
+If more than one movie matches the partial title, display a
+numbered list, <span class="red">ordered by title, then year</span>,
+of matching movies, followed by a prompt to
+select one movie (by its number).
+Then display information about that particular movie as
+described above.
+</p>
+<p>
+Examples of using the script can be found on the
+<a href="examples.php">Examples</a> page.
+</p>
+
+<!--
+<h3>Submission</h3>
+<p>
+Submit this assignment by doing the following:
+</p>
+<p style='text-align:center'>
+Login to Course Web Site &gt; Assignments &gt;
+Assignment 2 &gt; Submit Your Work &gt; Make Submission &gt; <br/>
+upload <tt>helpers.sql</tt>, <tt>helpers.py</tt>, <tt>dirby</tt>,
+<tt>releases</tt>, <tt>genres</tt> &gt; [Submit]
+</p>
+<p>
+The <tt>helpers.sql</tt> file should contain all the views and functions
+that you've written to make your Python code simpler.
+It should be completely
+self-contained and able to load in a single pass, so that it
+can be auto-tested as follows:
+</p>
+<ul>
+<li> a fresh copy of the MyMyUNSW database will be created
+	(using the schema from <tt>ass2.dump</tt>)
+<li> the data in this database may be <b>different</b> to the
+	database that you're using for testing
+<li> a new <tt>check.sql</tt> file will be loaded
+	(with expected results appropriate for the database)
+<li> the contents of your <tt>helpers.sql</tt> file will be loaded
+<li> each checking function will be executed and the results recorded
+</ul>
+<p>
+Before you submit your solution, you should check that it will load
+correctly for testing by using something like the following operations:
+</p>
+<pre>
+$ <b>dropdb ass2</b>                  <span class="comment">... remove any existing DB</span>
+$ <b>createdb ass2</b>                <span class="comment">... create an empty database</span>
+$ <b>psql ass2 -f .../ass2.dump</b>    <span class="comment">... load the Movies schema and data</span>
+$ <b>psql ass2 -f helpers.sql</b>        <span class="comment">... load your SQL code</span>
+</pre>
+<p>
+Note: if your database contains any views or functions that are not
+available in the <tt>helpers.sql</tt> file, you should add them to that
+file before you drop the database.
+</p>
+<p>
+If your code does not load without errors, fix it and repeat the above
+until it does.
+<p>
+You must ensure that your <tt>helpers.sql</tt> file will load correctly
+(i.e., it has no syntax errors and it contains all of your view definitions
+in the correct order).
+If we need to manually fix problems with your <tt>helpers.sql</tt>
+file in order to test it (e.g., change the order of some definitions),
+<b>you will be <q>fined</q> via a 1 mark penalty on
+your ceiling mark</b>
+(i.e., the maximum you can score is 19 out of 20 marks).
+</p>
+-->
+
+</div></body>
+</html>
